@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid()) 
+  email        String   @unique
+  password     String
+  role         String   // "Mahasiswa", "Dosen", "Admin"
+  name         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  mahasiswa    Mahasiswa?
+  dosen        Dosen?
+ 
+}
+
+model Mahasiswa {
+  id        String      @id @default(uuid())
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String      @unique
+  class     Class       @relation(fields: [classId], references: [id])
+  classId   String
+  absensi   Absensi[]
+}
+
+model Class {
+  id        String      @id @default(uuid())
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  mahasiswa Mahasiswa[]
+  jadwalKelas JadwalKelas[]
+}
+
+model Dosen {
+  id        String      @id @default(uuid())
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String      @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  jadwalKelas JadwalKelas[]
+  mataKuliah DosenMataKuliah[]
+}
+
+model MataKuliah {
+  id        String      @id @default(uuid())
+  name      String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  absensi   Absensi[]
+  jadwalKelas JadwalKelas[]
+  dosen     DosenMataKuliah[]
+}
+
+model Absensi {
+  id           String      @id @default(uuid())
+  mahasiswa    Mahasiswa   @relation(fields: [mahasiswaId], references: [id])
+  mahasiswaId  String
+  mataKuliah   MataKuliah  @relation(fields: [mataKuliahId], references: [id])
+  mataKuliahId String
+  date         DateTime    @default(now())
+  status       String      // "Hadir", "Tidak Hadir", atau "Izin"
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model JadwalKelas {
+  id           String      @id @default(uuid())
+  class        Class       @relation(fields: [classId], references: [id])
+  classId      String
+  mataKuliah   MataKuliah  @relation(fields: [mataKuliahId], references: [id])
+  mataKuliahId String
+  dosen        Dosen       @relation(fields: [dosenId], references: [id])
+  dosenId      String
+  dayOfWeek    String      // Contoh: "Senin", "Selasa"
+  startTime    DateTime
+  endTime      DateTime
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Semester {
+  id        String    @id @default(uuid())
+  name      String    // Contoh: "Semester Ganjil 2024/2025"
+  startDate DateTime
+  endDate   DateTime
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model DosenMataKuliah {
+  id           String     @id @default(uuid())
+  dosen        Dosen      @relation(fields: [dosenId], references: [id])
+  dosenId      String
+  mataKuliah   MataKuliah @relation(fields: [mataKuliahId], references: [id])
+  mataKuliahId String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}

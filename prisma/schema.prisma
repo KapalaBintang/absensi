@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// This is your Prisma schema file.
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,22 +10,34 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  Mahasiswa
+  Dosen
+  Admin
+}
+
+enum StatusAbsensi {
+  Hadir
+  TidakHadir
+  Izin
+}
+
 model User {
-  id           String   @id @default(uuid()) 
+  id           String   @id @default(uuid())
   email        String   @unique
   password     String
-  role         String   // "Mahasiswa", "Dosen", "Admin"
+  role         Role
   name         String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   mahasiswa    Mahasiswa?
   dosen        Dosen?
- 
 }
 
 model Mahasiswa {
   id        String      @id @default(uuid())
-  user      User        @relation(fields: [userId], references: [id])
+  nim       String      @unique
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String      @unique
   class     Class       @relation(fields: [classId], references: [id])
   classId   String
@@ -33,42 +45,42 @@ model Mahasiswa {
 }
 
 model Class {
-  id        String      @id @default(uuid())
-  name      String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  mahasiswa Mahasiswa[]
+  id         String      @id @default(uuid())
+  name       String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  mahasiswa  Mahasiswa[]
   jadwalKelas JadwalKelas[]
 }
 
 model Dosen {
-  id        String      @id @default(uuid())
-  user      User        @relation(fields: [userId], references: [id])
-  userId    String      @unique
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id         String         @id @default(uuid())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String         @unique
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
   jadwalKelas JadwalKelas[]
   mataKuliah DosenMataKuliah[]
 }
 
 model MataKuliah {
-  id        String      @id @default(uuid())
-  name      String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  absensi   Absensi[]
+  id          String         @id @default(uuid())
+  name        String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  absensi     Absensi[]
   jadwalKelas JadwalKelas[]
-  dosen     DosenMataKuliah[]
+  dosen       DosenMataKuliah[]
 }
 
 model Absensi {
   id           String      @id @default(uuid())
-  mahasiswa    Mahasiswa   @relation(fields: [mahasiswaId], references: [id])
+  mahasiswa    Mahasiswa   @relation(fields: [mahasiswaId], references: [id], onDelete: Cascade)
   mahasiswaId  String
   mataKuliah   MataKuliah  @relation(fields: [mataKuliahId], references: [id])
   mataKuliahId String
   date         DateTime    @default(now())
-  status       String      // "Hadir", "Tidak Hadir", atau "Izin"
+  status       StatusAbsensi
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 }
@@ -81,7 +93,7 @@ model JadwalKelas {
   mataKuliahId String
   dosen        Dosen       @relation(fields: [dosenId], references: [id])
   dosenId      String
-  dayOfWeek    String      // Contoh: "Senin", "Selasa"
+  dayOfWeek    String
   startTime    DateTime
   endTime      DateTime
   createdAt    DateTime    @default(now())
@@ -90,7 +102,7 @@ model JadwalKelas {
 
 model Semester {
   id        String    @id @default(uuid())
-  name      String    // Contoh: "Semester Ganjil 2024/2025"
+  name      String
   startDate DateTime
   endDate   DateTime
   createdAt DateTime  @default(now())
@@ -98,11 +110,12 @@ model Semester {
 }
 
 model DosenMataKuliah {
-  id           String     @id @default(uuid())
   dosen        Dosen      @relation(fields: [dosenId], references: [id])
   dosenId      String
   mataKuliah   MataKuliah @relation(fields: [mataKuliahId], references: [id])
   mataKuliahId String
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+
+  @@id([dosenId, mataKuliahId]) // Composite key
 }
